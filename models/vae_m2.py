@@ -10,13 +10,30 @@ sys.path.append(BASE_DIR)
 LOSSES_COLLECTION = '_losses'
 
 
-def placeholder_inputs(batch_size, dimx):
-    features = tf.placeholder(tf.float32, shape=(
+def placeholder_inputs_l(batch_size, dimx):
+    features_pl = tf.placeholder(tf.float32, shape=(
         batch_size, dimx))
-    return features
+    labels_pl = tf.placeholder(tf.int32, shape=(batch_size))
+    features_ul_pl = tf.placeholder(tf.float32, (
+        batch_size, dimx))
+    return features_pl, labels_pl
 
 
-def get_model(X, is_training, dim_z bn_decay=None):
+def placeholder_inputs_ul(batch_size, dimx):
+    features_ul_pl = tf.placeholder(tf.float32, (
+        batch_size, dimx))
+    return features_ul_pl
+
+def encoder(X, scope='encoder', bn_decay=None):
+    encoder_out_l1 = tf_util.fully_connected(
+        X, 64, scope=scope+'_fc1')
+    encoder_out_l2 = tf_util.fully_connected(
+        encoder_out_l1, 64, scope=scope+'_fc2')
+    z = tf_util.fully_connected(encoder_out_l2, dim_z * 2, scope='z')
+    z_mu, z_lsgms = tf.split(z, num_or_size_splits=2, axis=1)
+    return z_mu, z_lsgms
+
+def get_model(X, is_training, dim_z, bn_decay=None):
     """ Classification model"""
     batch_size = X.get_shape()[0].value
     dimx = img.get_shape()[1].value
